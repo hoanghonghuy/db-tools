@@ -1,11 +1,8 @@
-# src/db_tools/core/processor.py
-
 from typing import Any, Dict
 
 from rich import print
 from rich.progress import track
-from sqlalchemy import MetaData, Table, engine, insert
-from sqlalchemy import update, select
+from sqlalchemy import MetaData, Table, engine, insert, select, update
 
 # Import module faker_manager mới của chúng ta
 from db_tools.core import faker_manager
@@ -32,15 +29,11 @@ def process_seed(config: Dict[str, Any], db_engine: engine.Engine):
                 count = table_config.get("count", 10)
                 columns_to_fake = table_config.get("columns", {})
 
-                # === THAY ĐỔI CHÍNH NẰM Ở ĐÂY ===
-                # Giờ đây chúng ta chỉ cần gọi một hàm để lấy toàn bộ dữ liệu
                 print(f"   - Generating {count} fake records...")
                 data_to_insert = []
-                # Vẫn dùng track để có progress bar cho đẹp
                 for _ in track(range(count), description=f"Generating for '{table_name}'..."):
                     row = faker_manager.generate_fake_row(columns_to_fake)
                     data_to_insert.append(row)
-                # =================================
 
                 if data_to_insert:
                     print(f"   - Inserting records into [bold magenta]'{table_name}'[/bold magenta]...")
@@ -51,11 +44,11 @@ def process_seed(config: Dict[str, Any], db_engine: engine.Engine):
 
             except Exception as e:
                 print(f"[bold red]❌ An error occurred with table '{table_name}': {repr(e)}[/bold red]")
-                
-                
+
+
 def process_anonymize(config: Dict[str, Any], db_engine: engine.Engine):
     """
-    Thực thi tác vụ ẩn danh hóa dữ liệu.
+    Thực thi tác vụ ẩn danh hóa dữ liệu (phiên bản sửa lỗi, chạy đúng).
     """
     anonymize_config = config.get("anonymize")
     if not anonymize_config:
@@ -71,10 +64,8 @@ def process_anonymize(config: Dict[str, Any], db_engine: engine.Engine):
                 print(f"   - Reflecting table structure for [bold magenta]'{table_name}'[/bold magenta]...")
                 table = Table(table_name, metadata, autoload_with=db_engine)
                 
-                # Xác định cột khóa chính (primary key) để update từng dòng
                 primary_key_col = table.primary_key.columns.values()[0]
 
-                # Lấy ra tất cả các giá trị khóa chính của bảng
                 print(f"   - Fetching primary keys from '{table_name}'...")
                 p_keys = connection.execute(select(primary_key_col)).scalars().all()
                 
@@ -85,12 +76,13 @@ def process_anonymize(config: Dict[str, Any], db_engine: engine.Engine):
                 columns_to_anonymize = table_config.get("columns", {})
                 
                 print(f"   - Anonymizing {len(p_keys)} records...")
-                # Dùng track để có progress bar
+                
                 for pk_value in track(p_keys, description=f"Anonymizing '{table_name}'..."):
-                    # Tạo dữ liệu giả mới cho các cột cần ẩn danh
+                    # Tạo dữ liệu giả mới CHỈ cho các cột cần ẩn danh
                     new_fake_data = faker_manager.generate_fake_row(columns_to_anonymize)
                     
-                    # Tạo và thực thi câu lệnh UPDATE
+                    # Tạo và thực thi câu lệnh UPDATE cho TỪNG dòng
+                    # Đây là cách làm chính xác để tránh lỗi UNIQUE constraint
                     stmt = (
                         update(table)
                         .where(primary_key_col == pk_value)

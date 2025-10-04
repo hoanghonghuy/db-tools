@@ -1,18 +1,62 @@
 {
+  "app_title": {
+    "en": "DB Tools Interactive",
+    "vi": "DB Tools - Giao Diện Tương Tác"
+  },
+  "tree_root_label": {
+    "en": "Database Schema",
+    "vi": "Cấu Trúc Database"
+  },
   "welcome_message": {
-    "en": "🚀 Welcome to DB Tools!",
-    "vi": "🚀 Chào mừng đến với DB Tools!"
+    "en": "Welcome to DB Tools Interactive Mode!",
+    "vi": "Chào mừng đến với DB Tools!"
   },
-  "seeding_started": {
-    "en": "🌱 Starting to seed data for table '{table_name}'...",
-    "vi": "🌱 Bắt đầu tạo dữ liệu mẫu cho bảng '{table_name}'..."
+  "key_prompt": {
+    "en": "Press 's' to seed or 'a' to anonymize data.",
+    "vi": "Nhấn 's' để seed hoặc 'a' để ẩn danh hóa dữ liệu."
   },
-  "error_db_connection": {
-    "en": "❌ Failed to connect to the database: {error}",
-    "vi": "❌ Kết nối tới database thất bại: {error}"
+  "binding_seed": {
+    "en": "Seed Data",
+    "vi": "Tạo Dữ Liệu"
   },
-  "config_file_not_found": {
-    "en": "⚠️  Configuration file '{filename}' not found. Please create one.",
-    "vi": "⚠️  Không tìm thấy file cấu hình '{filename}'. Vui lòng tạo file."
+  "binding_anonymize": {
+    "en": "Anonymize Data",
+    "vi": "Ẩn Danh Hóa"
+  },
+  "binding_toggle_dark": {
+    "en": "Toggle Dark Mode",
+    "vi": "Đổi Giao Diện"
+  },
+  "binding_quit": {
+    "en": "Quit",
+    "vi": "Thoát"
+  },
+  "task_starting": {
+    "en": "Starting task: '{task_name}'...",
+    "vi": "Bắt đầu tác vụ: '{task_name}'..."
+  },
+  "task_finished": {
+    "en": "Task '{task_name}' finished.",
+    "vi": "Tác vụ '{task_name}' đã hoàn tất."
+  },
+  "task_error": {
+    "en": "An error occurred during task '{task_name}':",
+    "vi": "Đã xảy ra lỗi trong tác vụ '{task_name}':"
+  },
+  "schema_loading": {
+    "en": "Connecting to database and loading schema...",
+    "vi": "Đang kết nối database và tải cấu trúc..."
+  },
+  "schema_loaded_success": {
+    "en": "Schema loaded successfully.",
+    "vi": "Tải cấu trúc thành công."
+  },
+  "schema_load_error": {
+    "en": "Failed to connect or inspect database:",
+    "vi": "Lỗi kết nối hoặc kiểm tra database:"
+  },
+  "config_not_found": {
+    "en": "Error: 'connection' string not found.",
+    "vi": "Lỗi: Không tìm thấy chuỗi 'connection'."
   }
 }

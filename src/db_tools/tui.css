@@ -1,0 +1,22 @@
+/* src/db_tools/tui.css */
+
+Footer {
+    background: $primary;
+    color: $text-muted; /* Màu chữ mô tả mờ hơn một chút */
+}
+
+/* Định dạng cho từng "nút" trong Footer */
+.footer--key {
+    background: $secondary;
+    color: $text;
+    text-style: bold;
+    /* Thêm viền và khoảng cách để trông giống nút bấm */
+    border: round $primary-darken-2;
+    margin: 0 1;
+    padding: 0 1;
+}
+
+/* Bỏ padding thừa cho phần mô tả */
+.footer--description {
+    padding-left: 0;
+}

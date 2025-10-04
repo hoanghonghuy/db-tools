@@ -8,6 +8,7 @@ from db_tools.core.database import get_engine
 from db_tools.core.processor import process_seed
 from db_tools.core.translator import t
 from db_tools.core.processor import process_seed, process_anonymize
+from db_tools.tui import DbToolsApp
 
 app = typer.Typer(help="A CLI tool to seed and anonymize development databases.")
 
@@ -76,6 +77,13 @@ def anonymize():
         print(f"[bold red]An unexpected error occurred: {e}[/bold red]")
         raise typer.Exit(code=1)
 
+@app.command()
+def ui():
+    """
+    Launch the interactive Text User Interface (TUI).
+    """
+    app = DbToolsApp()
+    app.run()
 
 if __name__ == "__main__":
     app()

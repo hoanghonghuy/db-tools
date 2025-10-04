@@ -19,7 +19,8 @@ dependencies = [
     "rich",
     "SQLAlchemy",
     "Faker",
-    "PyYAML"
+    "PyYAML",
+    "textual"
 ]
 
 [project.scripts]
@@ -29,4 +30,4 @@ db-tools = "db_tools.main:app"
 where = ["src"]
 
 [project.optional-dependencies]
-dev = ["pytest", "textual"]
+dev = ["pytest"]

@@ -1,0 +1,18 @@
+{
+  "welcome_message": {
+    "en": "🚀 Welcome to DB Tools!",
+    "vi": "🚀 Chào mừng đến với DB Tools!"
+  },
+  "seeding_started": {
+    "en": "🌱 Starting to seed data for table '{table_name}'...",
+    "vi": "🌱 Bắt đầu tạo dữ liệu mẫu cho bảng '{table_name}'..."
+  },
+  "error_db_connection": {
+    "en": "❌ Failed to connect to the database: {error}",
+    "vi": "❌ Kết nối tới database thất bại: {error}"
+  },
+  "config_file_not_found": {
+    "en": "⚠️  Configuration file '{filename}' not found. Please create one.",
+    "vi": "⚠️  Không tìm thấy file cấu hình '{filename}'. Vui lòng tạo file."
+  }
+}

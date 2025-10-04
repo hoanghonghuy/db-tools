@@ -3,6 +3,7 @@
 from typing import Any, Dict, Optional
 from sqlalchemy import create_engine, engine, inspect
 from rich import print
+from sqlalchemy import MetaData, Table, func, select
 
 def get_engine(connection_string: str) -> Optional[engine.Engine]:
     """
@@ -39,3 +40,14 @@ def inspect_db_schema(db_engine: engine.Engine) -> Dict[str, Any]:
         columns = inspector.get_columns(table_name)
         schema[table_name] = [col['name'] for col in columns]
     return schema
+
+def get_table_row_count(db_engine: engine.Engine, table_name: str) -> int:
+    """Đếm số lượng dòng trong một bảng cụ thể."""
+    metadata = MetaData()
+    table = Table(table_name, metadata, autoload_with=db_engine)
+    
+    with db_engine.connect() as connection:
+        # Tạo câu lệnh SELECT COUNT(*)
+        stmt = select(func.count()).select_from(table)
+        row_count = connection.execute(stmt).scalar_one()
+        return row_count

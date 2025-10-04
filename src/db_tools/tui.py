@@ -1,6 +1,6 @@
 import io
 from contextlib import redirect_stdout
-from typing import Any, Dict
+from typing import Any, Dict, List
 
 from rich.text import Text
 from textual import work
@@ -10,22 +10,25 @@ from textual.message import Message
 from textual.widgets import DataTable, Footer, Header, RichLog, Tree
 
 from db_tools.core.config_loader import load_config
-# Thêm `ping_database` vào import
-from db_tools.core.database import (get_engine, get_table_row_count,
+from db_tools.core.database import (get_engine, get_table_preview_data,
                                       inspect_db_schema, ping_database)
 from db_tools.core.processor import process_anonymize, process_seed
 from db_tools.core.translator import Translator
 
-# ... (các class LogMessage, LogRedirect, TableDetails giữ nguyên) ...
+
 class LogMessage(Message):
     def __init__(self, content: Any) -> None:
         self.content = content
         super().__init__()
 
-class TableDetails(Message):
-    def __init__(self, row_count: int) -> None:
-        self.row_count = row_count
+
+class TablePreview(Message):
+    def __init__(self, table_name: str, columns: List[str], rows: List[tuple]) -> None:
+        self.table_name = table_name
+        self.columns = columns
+        self.rows = rows
         super().__init__()
+
 
 class LogRedirect(io.StringIO):
     def __init__(self, app_ref: App):
@@ -34,6 +37,7 @@ class LogRedirect(io.StringIO):
     def write(self, s: str) -> int:
         self.app_ref.post_message(LogMessage(s))
         return len(s)
+
 
 class DbToolsApp(App):
     TITLE = "DB Tools"
@@ -47,7 +51,7 @@ class DbToolsApp(App):
 
     def __init__(self) -> None:
         super().__init__()
-        self.t = Translator()
+        self.t = Translator() 
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -55,7 +59,7 @@ class DbToolsApp(App):
             yield Tree(self.t.get("tree_root_label"), id="schema_tree", classes="sidebar")
             with Vertical():
                 yield RichLog(id="log_viewer", auto_scroll=True, wrap=True, highlight=True)
-                yield DataTable(id="details_table", show_header=False)
+                yield DataTable(id="details_table", show_header=True)
         yield Footer()
 
     def on_mount(self) -> None:
@@ -83,33 +87,50 @@ class DbToolsApp(App):
     def on_log_message(self, message: LogMessage) -> None:
         self.write_log(message.content)
 
+    # --- THAY ĐỔI: Sửa lại cách reset DataTable ---
+    def _reset_details_table(self) -> DataTable:
+        """Helper để xóa sạch cả cột và dòng của DataTable."""
+        details_table = self.query_one(DataTable)
+        details_table.clear()
+        # Lấy danh sách key của các cột hiện có và xóa TỪNG CỘT MỘT
+        # Đây là cách làm chính thống, được Textual hỗ trợ
+        column_keys = list(details_table.columns.keys())
+        for key in column_keys:
+            details_table.remove_column(key)
+        return details_table
+    # ----------------------------------------------
+
     async def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
         table_name_node = event.node
         if table_name_node.parent == self.query_one(Tree).root:
             table_name = str(table_name_node.label).replace("[bold]", "").replace("[/bold]", "")
-            details_table = self.query_one(DataTable)
-            details_table.clear() 
-            details_table.add_columns("Property", "Value")
+            
+            details_table = self._reset_details_table()
+            
             details_table.display = True
-            details_table.add_row("Status", "Fetching details...") 
-            self.fetch_table_details(table_name)
+            details_table.add_column("Status")
+            details_table.add_row("Fetching data preview...")
+            
+            self.fetch_table_preview(table_name)
 
     @work(exclusive=True, group="db_work", thread=True)
-    def fetch_table_details(self, table_name: str) -> None:
+    def fetch_table_preview(self, table_name: str) -> None:
         try:
             config = load_config()
             connection_string = config.get("connection")
             db_engine = get_engine(connection_string)
-            row_count = get_table_row_count(db_engine, table_name)
-            self.post_message(TableDetails(row_count))
+            columns, rows = get_table_preview_data(db_engine, table_name)
+            self.post_message(TablePreview(table_name, columns, rows))
         except Exception as e:
-            self.write_log(f"[red]Could not fetch details for '{table_name}': {repr(e)}[/red]")
+            self.write_log(f"[red]Could not fetch preview for '{table_name}': {repr(e)}[/red]")
 
-    async def on_table_details(self, message: TableDetails) -> None:
-        table = self.query_one(DataTable)
-        table.clear()
-        table.add_columns("Property", "Value")
-        table.add_row("Row Count", str(message.row_count))
+    async def on_table_preview(self, message: TablePreview) -> None:
+        table = self._reset_details_table()
+        
+        table.add_columns(*message.columns)
+        for row in message.rows:
+            string_row = [str(cell) for cell in row]
+            table.add_row(*string_row)
 
     @work(exclusive=True, group="db_work", thread=True)
     def load_schema(self) -> None:
@@ -122,10 +143,8 @@ class DbToolsApp(App):
                 return
 
             db_engine = get_engine(connection_string)
-            
             dialect_name = ping_database(db_engine)
             self.call_from_thread(self.write_log, f"[green]Connection successful to [bold]{dialect_name.upper()}[/bold] database.[/green]")
-
             schema = inspect_db_schema(db_engine)
             self.call_from_thread(self.update_schema_tree, schema)
         except Exception as e:

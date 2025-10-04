@@ -50,7 +50,7 @@ def process_seed(config: Dict[str, Any], db_engine: engine.Engine):
                     print(f"[bold green]✅ Seeded {len(data_to_insert)} records into '{table_name}' successfully![/bold green]")
 
             except Exception as e:
-                print(f"[bold red]❌ An error occurred with table '{table_name}': {e}[/bold red]")
+                print(f"[bold red]❌ An error occurred with table '{table_name}': {repr(e)}[/bold red]")
                 
                 
 def process_anonymize(config: Dict[str, Any], db_engine: engine.Engine):
@@ -102,4 +102,4 @@ def process_anonymize(config: Dict[str, Any], db_engine: engine.Engine):
                 print(f"[bold green]✅ Anonymized {len(p_keys)} records in '{table_name}' successfully![/bold green]")
 
             except Exception as e:
-                print(f"[bold red]❌ An error occurred with table '{table_name}': {e}[/bold red]")
+                print(f"[bold red]❌ An error occurred with table '{table_name}': {repr(e)}[/bold red]")

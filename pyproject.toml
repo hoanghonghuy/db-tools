@@ -27,3 +27,6 @@ db-tools = "db_tools.main:app"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[project.optional-dependencies]
+dev = ["pytest"]

@@ -2,27 +2,33 @@ from typing import Any, Dict
 
 from rich import print
 from rich.progress import track
-from sqlalchemy import MetaData, Table, engine, insert, select, update
+# --- THAY ĐỔI 1: Import thêm `inspect` ---
+from sqlalchemy import MetaData, Table, engine, insert, inspect, select, update
 
-# Import module faker_manager mới của chúng ta
 from db_tools.core import faker_manager
 
 
 def process_seed(config: Dict[str, Any], db_engine: engine.Engine):
-    """
-    Thực thi tác vụ seeding dữ liệu.
-    """
+    """Thực thi tác vụ seeding dữ liệu."""
     seed_config = config.get("seed")
     if not seed_config:
-        print("[yellow]No 'seed' configuration found in db_tools.yml. Skipping.[/yellow]")
+        print("[yellow]No 'seed' configuration found. Skipping.[/yellow]")
         return
 
     print("\n[bold cyan]🌱 Starting data seeding process...[/bold cyan]")
     metadata = MetaData()
+    inspector = inspect(db_engine) # Tạo inspector để kiểm tra
 
     with db_engine.connect() as connection:
         for table_name, table_config in seed_config.items():
             try:
+                # --- Kiểm tra bảng trước khi thao tác ---
+                if not inspector.has_table(table_name):
+                    print(f"[bold red]❌ Error: Table '{table_name}' does not exist in the database.[/bold red]")
+                    print(f"[yellow]   Please create the table before seeding data.[/yellow]")
+                    continue # Bỏ qua và xử lý bảng tiếp theo
+                # ---------------------------------------------------
+
                 print(f"   - Reflecting table structure for [bold magenta]'{table_name}'[/bold magenta]...")
                 table = Table(table_name, metadata, autoload_with=db_engine)
 
@@ -47,20 +53,25 @@ def process_seed(config: Dict[str, Any], db_engine: engine.Engine):
 
 
 def process_anonymize(config: Dict[str, Any], db_engine: engine.Engine):
-    """
-    Thực thi tác vụ ẩn danh hóa dữ liệu (phiên bản sửa lỗi, chạy đúng).
-    """
+    """Thực thi tác vụ ẩn danh hóa dữ liệu."""
     anonymize_config = config.get("anonymize")
     if not anonymize_config:
-        print("[yellow]No 'anonymize' configuration found in db_tools.yml. Skipping.[/yellow]")
+        print("[yellow]No 'anonymize' configuration found. Skipping.[/yellow]")
         return
 
     print("\n[bold cyan]🎭 Starting data anonymization process...[/bold cyan]")
     metadata = MetaData()
+    inspector = inspect(db_engine) # Tạo inspector để kiểm tra
 
     with db_engine.connect() as connection:
         for table_name, table_config in anonymize_config.items():
             try:
+                # --- Thêm kiểm tra tương tự cho anonymize ---
+                if not inspector.has_table(table_name):
+                    print(f"[bold red]❌ Error: Table '{table_name}' does not exist in the database.[/bold red]")
+                    continue
+                # ------------------------------------------------------
+
                 print(f"   - Reflecting table structure for [bold magenta]'{table_name}'[/bold magenta]...")
                 table = Table(table_name, metadata, autoload_with=db_engine)
                 
@@ -78,11 +89,7 @@ def process_anonymize(config: Dict[str, Any], db_engine: engine.Engine):
                 print(f"   - Anonymizing {len(p_keys)} records...")
                 
                 for pk_value in track(p_keys, description=f"Anonymizing '{table_name}'..."):
-                    # Tạo dữ liệu giả mới CHỈ cho các cột cần ẩn danh
                     new_fake_data = faker_manager.generate_fake_row(columns_to_anonymize)
-                    
-                    # Tạo và thực thi câu lệnh UPDATE cho TỪNG dòng
-                    # Đây là cách làm chính xác để tránh lỗi UNIQUE constraint
                     stmt = (
                         update(table)
                         .where(primary_key_col == pk_value)

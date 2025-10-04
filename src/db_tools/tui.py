@@ -10,11 +10,13 @@ from textual.message import Message
 from textual.widgets import DataTable, Footer, Header, RichLog, Tree
 
 from db_tools.core.config_loader import load_config
-from db_tools.core.database import get_engine, get_table_row_count, inspect_db_schema
+# Thêm `ping_database` vào import
+from db_tools.core.database import (get_engine, get_table_row_count,
+                                      inspect_db_schema, ping_database)
 from db_tools.core.processor import process_anonymize, process_seed
 from db_tools.core.translator import Translator
 
-
+# ... (các class LogMessage, LogRedirect, TableDetails giữ nguyên) ...
 class LogMessage(Message):
     def __init__(self, content: Any) -> None:
         self.content = content
@@ -25,7 +27,6 @@ class TableDetails(Message):
         self.row_count = row_count
         super().__init__()
 
-
 class LogRedirect(io.StringIO):
     def __init__(self, app_ref: App):
         self.app_ref = app_ref
@@ -33,7 +34,6 @@ class LogRedirect(io.StringIO):
     def write(self, s: str) -> int:
         self.app_ref.post_message(LogMessage(s))
         return len(s)
-
 
 class DbToolsApp(App):
     TITLE = "DB Tools"
@@ -47,7 +47,7 @@ class DbToolsApp(App):
 
     def __init__(self) -> None:
         super().__init__()
-        self.t = Translator() 
+        self.t = Translator()
 
     def compose(self) -> ComposeResult:
         yield Header()
@@ -86,15 +86,12 @@ class DbToolsApp(App):
     async def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
         table_name_node = event.node
         if table_name_node.parent == self.query_one(Tree).root:
-            table_name = str(table_name_node.label).replace("[bold]", "").replace("[/bold]", "") # Lấy tên bảng sạch
+            table_name = str(table_name_node.label).replace("[bold]", "").replace("[/bold]", "")
             details_table = self.query_one(DataTable)
-            
             details_table.clear() 
             details_table.add_columns("Property", "Value")
-            
             details_table.display = True
             details_table.add_row("Status", "Fetching details...") 
-            
             self.fetch_table_details(table_name)
 
     @work(exclusive=True, group="db_work", thread=True)
@@ -125,6 +122,10 @@ class DbToolsApp(App):
                 return
 
             db_engine = get_engine(connection_string)
+            
+            dialect_name = ping_database(db_engine)
+            self.call_from_thread(self.write_log, f"[green]Connection successful to [bold]{dialect_name.upper()}[/bold] database.[/green]")
+
             schema = inspect_db_schema(db_engine)
             self.call_from_thread(self.update_schema_tree, schema)
         except Exception as e:

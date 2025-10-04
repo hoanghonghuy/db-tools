@@ -31,3 +31,5 @@ where = ["src"]
 
 [project.optional-dependencies]
 dev = ["pytest"]
+postgres = ["psycopg2-binary"]
+sqlserver = ["pyodbc"]

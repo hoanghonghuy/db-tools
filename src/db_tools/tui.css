@@ -1,22 +1,50 @@
 /* src/db_tools/tui.css */
 
-Footer {
-    background: $primary;
-    color: $text-muted; /* Màu chữ mô tả mờ hơn một chút */
+/* --- Layout chính --- */
+/* Dùng dock để ghim Header và Footer */
+Header {
+    dock: top;
 }
 
-/* Định dạng cho từng "nút" trong Footer */
+Footer {
+    dock: bottom;
+}
+
+/* Container chính sẽ tự động chiếm không gian còn lại */
+#main_container {
+    layout: horizontal;
+}
+
+#schema_tree {
+    width: 30%;
+    height: 100%;
+    border-right: solid $primary;
+}
+
+#content_container {
+    width: 70%;
+    height: 100%;
+    /* Cho phép khung nội dung cuộn nếu quá nhỏ */
+    overflow: auto; 
+}
+
+#details_table {
+    /* Cho phép bảng chi tiết cuộn ngang khi cần */
+    overflow-x: auto;
+}
+
+
+/* --- Footer Styling --- */
+/* Phần này giữ nguyên */
 .footer--key {
     background: $secondary;
     color: $text;
     text-style: bold;
-    /* Thêm viền và khoảng cách để trông giống nút bấm */
     border: round $primary-darken-2;
     margin: 0 1;
     padding: 0 1;
 }
 
-/* Bỏ padding thừa cho phần mô tả */
 .footer--description {
     padding-left: 0;
 }

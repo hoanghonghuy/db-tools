@@ -3,7 +3,7 @@ from contextlib import redirect_stdout
 from typing import Any, Dict, List
 
 from rich.text import Text
-from textual import work
+from textual import events, work
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, Vertical
 from textual.message import Message
@@ -21,14 +21,12 @@ class LogMessage(Message):
         self.content = content
         super().__init__()
 
-
 class TablePreview(Message):
     def __init__(self, table_name: str, columns: List[str], rows: List[tuple]) -> None:
         self.table_name = table_name
         self.columns = columns
         self.rows = rows
         super().__init__()
-
 
 class LogRedirect(io.StringIO):
     def __init__(self, app_ref: App):
@@ -55,9 +53,9 @@ class DbToolsApp(App):
 
     def compose(self) -> ComposeResult:
         yield Header()
-        with Horizontal():
-            yield Tree(self.t.get("tree_root_label"), id="schema_tree", classes="sidebar")
-            with Vertical():
+        with Horizontal(id="main_container"):
+            yield Tree(self.t.get("tree_root_label"), id="schema_tree")
+            with Vertical(id="content_container"):
                 yield RichLog(id="log_viewer", auto_scroll=True, wrap=True, highlight=True)
                 yield DataTable(id="details_table", show_header=True)
         yield Footer()
@@ -87,7 +85,7 @@ class DbToolsApp(App):
     def on_log_message(self, message: LogMessage) -> None:
         self.write_log(message.content)
 
-    # --- THAY ĐỔI: Sửa lại cách reset DataTable ---
+    # --- SỬA LẠI TRIỆT ĐỂ Ở ĐÂY ---
     def _reset_details_table(self) -> DataTable:
         """Helper để xóa sạch cả cột và dòng của DataTable."""
         details_table = self.query_one(DataTable)
@@ -98,7 +96,6 @@ class DbToolsApp(App):
         for key in column_keys:
             details_table.remove_column(key)
         return details_table
-    # ----------------------------------------------
 
     async def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
         table_name_node = event.node
